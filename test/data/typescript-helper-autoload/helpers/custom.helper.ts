@@ -1,18 +1,18 @@
-import Helper from '@codeceptjs/helper';
+import { AbstractHelper } from './abstract.helper'
 
 interface TestData {
-  message: string;
-  count: number;
+  message: string
+  count: number
 }
 
-class CustomHelper extends Helper {
+class CustomHelper extends AbstractHelper {
   async logTestData(data: TestData): Promise<void> {
-    console.log(`Message: ${data.message}, Count: ${data.count}`);
+    this.log(`Message: ${data.message}, Count: ${data.count}`)
   }
 
   getGreeting(name: string): string {
-    return `Hello, ${name}!`;
+    return `Hello, ${name}!`
   }
 }
 
-export default CustomHelper;
+export default CustomHelper

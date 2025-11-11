@@ -1,3 +1,12 @@
+## 4.0.0-beta.22
+
+### 🐛 Bug Fixes
+
+- Fixed TypeScript helper transpilation to support imports from other TypeScript files
+  - Custom helpers can now import from other TypeScript files (e.g., `import { AbstractHelper } from './abstract.helper'`)
+  - Automatically transpiles imported TypeScript dependencies recursively
+  - Correctly rewrites import paths in transpiled `.temp.mjs` files
+
 ## 3.7.5
 
 ❤️ Thanks all to those who contributed to make this release! ❤️
