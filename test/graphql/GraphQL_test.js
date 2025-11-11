@@ -107,8 +107,8 @@ describe('GraphQL', () => {
   describe('JSONResponse integration', () => {
     let jsonResponse
 
-    beforeEach(() => {
-      Container.create({
+    beforeEach(async () => {
+      await Container.create({
         helpers: {
           GraphQL: {
             endpoint: graphql_url,
@@ -120,7 +120,14 @@ describe('GraphQL', () => {
       })
       I = Container.helpers('GraphQL')
       jsonResponse = Container.helpers('JSONResponse')
-      jsonResponse._beforeSuite()
+      // Manually set up JSONResponse to capture GraphQL responses
+      // This avoids calling _beforeSuite() which may be wrapped by recorder
+      jsonResponse.response = null
+      const origOnResponse = I.config.onResponse
+      I.config.onResponse = response => {
+        jsonResponse.response = response
+        if (typeof origOnResponse === 'function') origOnResponse(response)
+      }
     })
 
     afterEach(() => {

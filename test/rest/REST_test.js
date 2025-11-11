@@ -140,7 +140,7 @@ describe('REST', () => {
     let jsonResponse
 
     beforeEach(async () => {
-      Container.create({
+      await Container.create({
         helpers: {
           REST: {},
           JSONResponse: {},
@@ -149,7 +149,14 @@ describe('REST', () => {
       await Container.started()
       I = Container.helpers('REST')
       jsonResponse = Container.helpers('JSONResponse')
-      jsonResponse._beforeSuite()
+      // Manually set up JSONResponse to capture REST responses
+      // This avoids calling _beforeSuite() which may be wrapped by recorder
+      jsonResponse.response = null
+      const origOnResponse = I.config.onResponse
+      I.config.onResponse = response => {
+        jsonResponse.response = response
+        if (typeof origOnResponse === 'function') origOnResponse(response)
+      }
     })
 
     afterEach(() => {
