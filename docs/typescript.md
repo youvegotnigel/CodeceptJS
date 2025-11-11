@@ -213,6 +213,138 @@ export const config = {
 4. Change `require: ['ts-node/register']` to `require: ['tsx/cjs']`
 5. Run tests: `npx codeceptjs run`
 
+### TypeScript Custom Helpers <Badge text="Automatic Transpilation" type="tip"/>
+
+Custom helpers written in TypeScript are **automatically transpiled** at runtime in CodeceptJS 4.x! You don't need NODE_OPTIONS or ESM loaders.
+
+#### Requirements
+
+**Install TypeScript and @codeceptjs/helper:**
+```bash
+npm install --save-dev typescript @codeceptjs/helper
+```
+
+That's it! CodeceptJS will automatically detect `.ts` helper files and transpile them on-the-fly using the TypeScript compiler.
+
+#### Example TypeScript Helper
+
+```typescript
+// helpers/material-component.helper.ts
+import { Helper } from '@codeceptjs/helper'
+
+class MaterialComponentHelper extends Helper {
+  async waitForVisibleMaterialSnackbar(sec?: number): Promise<void> {
+    await this.helpers.Playwright.waitForVisible("simple-snack-bar", sec)
+  }
+
+  async waitForTextMaterialSnackbarText(
+    text: string,
+    timeout: number = 10
+  ): Promise<void> {
+    await this.helpers.Playwright.waitForText(
+      text,
+      timeout,
+      "simple-snack-bar"
+    )
+  }
+}
+
+export default MaterialComponentHelper
+```
+
+**Configuration:**
+```typescript
+// codecept.conf.ts
+export const config = {
+  tests: './tests/**/*.spec.ts',
+  require: ['tsx/cjs'],  // For test files
+  helpers: {
+    Playwright: {
+      url: 'http://localhost',
+      browser: 'chromium'
+    },
+    MaterialComponent: {
+      require: "./helpers/material-component.helper.ts"  // TypeScript helper - auto-loaded!
+    }
+  }
+}
+```
+
+**Run tests:**
+```bash
+npx codeceptjs run  # TypeScript helper automatically transpiled!
+```
+
+#### How It Works
+
+When CodeceptJS encounters a `.ts` helper file:
+1. Detects the `.ts` extension and `ERR_UNKNOWN_FILE_EXTENSION` error
+2. Checks if `typescript` package is installed
+3. Transpiles the helper to a temporary `.mjs` file  
+4. Imports the transpiled file
+5. Cleans up temporary files after loading
+
+This happens automatically - no configuration needed!
+
+#### TypeScript Files Support Matrix
+
+| File Type | Auto-Transpiled? | Configuration Required |
+|-----------|------------------|------------------------|
+| Test files (`*_test.ts`) | Via tsx/cjs loader | `require: ['tsx/cjs']` in config |
+| Helper files (`helper.ts`) | ✅ Automatic | `npm install typescript` |
+| Config files (`codecept.conf.ts`) | ✅ Automatic | None (built-in) |
+| Page Objects/Steps (`steps.ts`) | ✅ Automatic | `npm install typescript` |
+
+**Key Points:**
+- **Test files**: Need `tsx/cjs` in `require` array (Mocha uses `require()` internally)
+- **Helper/Page Object files**: Auto-transpiled when loaded via `import()`  
+- **Config files**: Always automatically transpiled (built-in feature)
+
+**Why Different Approaches?**
+
+Test files use a **loader** (`tsx/cjs`) while helpers use **auto-transpilation**. This hybrid approach is optimal because:
+
+1. **Test files are loaded by Mocha** via `require()` - CodeceptJS can't intercept this, so we need a loader like `tsx/cjs` that hooks into Node.js's require system
+2. **Helpers are loaded by CodeceptJS** via `import()` - we can catch the error and transpile on-demand
+3. **Performance** - tsx's optimized loader with caching is faster for many test files
+4. **Simplicity** - Auto-transpilation for helpers means no extra configuration needed
+
+This gives you the best of both worlds: efficient test loading and zero-config helper transpilation!
+
+#### Troubleshooting
+
+**Error: "TypeScript helper detected but could not be loaded"**
+
+Install TypeScript in your project:
+```bash
+npm install --save-dev typescript
+```
+
+**Error: "Cannot find module '@codeceptjs/helper'"**
+
+Install the helper base class:
+```bash
+npm install --save-dev @codeceptjs/helper
+```
+- Config files are always automatically transpiled by CodeceptJS
+
+#### Alternative: Compile TypeScript Helper to JavaScript
+
+If you can't use `NODE_OPTIONS`, compile your helper to JavaScript:
+
+```bash
+npx tsc helpers/material-component.helper.ts --module ES2022 --target ES2022
+```
+
+Then reference the `.js` file:
+```typescript
+helpers: {
+  MaterialComponent: {
+    require: "./helpers/material-component.helper.js"  // Compiled JS
+  }
+}
+```
+
 ## Promise-Based Typings
 
 By default, CodeceptJS tests are written in synchronous mode. This is a regular CodeceptJS test:

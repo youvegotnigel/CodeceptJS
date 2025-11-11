@@ -1,0 +1,11 @@
+{
+  "name": "typescript-helper-autoload-test",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "tsx": "^4.20.6"
+  },
+  "devDependencies": {
+    "@codeceptjs/helper": "^2.0.4"
+  }
+}
